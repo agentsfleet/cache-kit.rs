@@ -178,8 +178,6 @@ If you're standing the Netlify site up from scratch:
 4. Move DNS records at the registrar to Netlify's values (Netlify shows them in the
    domain panel). Let's Encrypt cert auto-provisions once DNS resolves.
 
-See `../docs/CUTOVER.md` for the full GitHub-Pages-removal checklist.
-
 ---
 
 ## Design system
@@ -213,4 +211,4 @@ the top.
 ## History
 
 - May 12, 2026 — Migrated from Jekyll (Minimal Mistakes, GitHub Pages) to Next.js 16
-  + Netlify. Content ported via `scripts/port-jekyll.mjs`. See `../docs/CUTOVER.md`.
+  + Netlify. Content ported via `scripts/port-jekyll.mjs`.
