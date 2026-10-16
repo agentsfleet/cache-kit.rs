@@ -20,7 +20,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 **Batch:** B1 — runs alongside M092_001 (independent code paths, both must land before v0.9.2 release notes).
 **Branch:** {feat/m092-observability — added when work begins}
 **Depends on:** none (independent of M092_001 — but co-design sensibly: error codes feed `record_error_typed`)
-**Provenance:** agent-generated (pre-spec, derived from `plans/comprehensive-code-review.md` §16 #2 "Add Observability Hooks" + §16 #8 "Add Cache Statistics", grounded in actual `src/observability.rs` (189 lines) and `site/lib/content.ts` (275 lines) shape)
+**Provenance:** agent-generated (pre-spec, derived from the comprehensive review's §16 #2 "Add Observability Hooks" + #8 "Add Cache Statistics" — inlined as Appendix A; the review was retired with `plans/` — grounded in actual `src/observability.rs` (189 lines) and `site/lib/content.ts` (275 lines) shape)
 
 > Cache-kit already exposes a `CacheMetrics` trait (`src/observability.rs:85`) and a `NoOpMetrics` default. The trait routes through the `log` crate's `debug!`/`warn!` macros, keys metrics by raw cache key (high-cardinality, breaks Prometheus), and ships no `tracing`, no `metrics`-crate, and no built-in stats collector. This spec turns the existing hook into a usable production surface — additive, feature-gated, no breaking changes to the v0.9.x trait shape — and at the same time adds version-segmented routing to the Next.js docs site so the v0.9.2 observability page can ship without overwriting future pages.
 
@@ -36,7 +36,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 4. `Cargo.toml` — currently depends on `log = "0.4"`. Add `tracing = "0.1"` (default-on). Add `metrics = { version = "...", optional = true }` behind a new `metrics-adapter` feature.
 5. `site/lib/content.ts` (275 lines) and `site/app/[section]/[slug]/page.tsx` (49 lines) — current routing assumes `content/{section}/{slug}.mdx`. To support multiple versions, the loader gains a version dimension, the route gains a `[version]` segment, and a default-version redirect ships at the existing `/{section}/{slug}` paths.
 6. `examples/actixsqlx/src/services/user_service.rs` — primary integration consumer. After this spec lands, the example app gets a one-line wiring change (`CacheExpander::new(...).with_tracing()`) plus a `tracing-subscriber` setup line in `main.rs`. Confirm the example still runs.
-7. `plans/comprehensive-code-review.md` §16 #2 + §16 #8 (intent only — do NOT copy code) — the recommendations the spec implements. Read **High Priority #2** and **Low Priority #8**; ignore the prose suggestions about OpenTelemetry — that's a separate spec, this one ships `tracing` (which OTel adapters consume) but does not own the OTel adapter wiring.
+7. **Appendix A** of this spec (intent only — do NOT copy code) — the retired review's recommendations this spec implements, preserved inline. Scope boundary that travels with them: this spec ships `tracing` (which OpenTelemetry (OTel) adapters consume) but does not own the OTel adapter wiring — that's a separate spec.
 
 ---
 
@@ -184,7 +184,6 @@ The `CacheMetrics` trait grows five new default-method `_typed` variants that ta
 | `site/components/VersionSelector.tsx` | CREATE | Sidebar dropdown; reads from `listVersions()`. |
 | `CHANGELOG.md` | EDIT | `## [0.9.2]` section: observability bullet + docs-versioning bullet alongside M092_001's bullet. Includes the Migration subsection. |
 | `VERSION` | EDIT | `0.9.2`. |
-| `plans/comprehensive-code-review.md` §16 | EDIT (annotation only) | Mark #2 + #8 as SPEC'D linking to this spec. |
 
 ---
 
@@ -533,8 +532,32 @@ N/A — no files deleted. `src/observability.rs` becomes a re-export shim; exist
 - **StatsD / Datadog / NewRelic first-party adapters.** Route via `metrics`-crate exporter ecosystem.
 - **Per-entity-type sub-counters in `CacheStatsSnapshot`.** Flat for v0.9.2; bucketed snapshots are v1.0.
 - **Histogram in built-in `StatsCollector`.** Use the `metrics`-crate adapter; HDR-histogram in v1.0.
-- **Circuit breaker** (`plans/comprehensive-code-review.md` §16 #1). Adjacent concern; own spec (M093 candidate). Error codes (M092_001) + stats from this spec are prerequisites.
+- **Circuit breaker** — prevent cascading failures when the backend is down, implemented in `CacheExpander` (retired review's §16 #1; see Appendix A §A.2). Adjacent concern; own spec (M093 candidate). Error codes (M092_001) + stats from this spec are prerequisites.
 - **Cache warming, compression, tagging, multi-level helper, RocksDB/DynamoDB backends** — each is its own spec; none belong in v0.9.2.
 - **Documentation comparison page vs moka/cached/redis-rs.** This spec replaces the prior M092_002 docs-only scope with library work that gives such a page a real story to tell. A comparison page can revive in v0.9.3 once observability has shipped and the matrix shows ✅ in cache-kit's column for the rows that matter.
 - **Cross-version docs search**, **automatic version banners**, **deep-link migration tables.** Each is a small additional spec on top of §7's foundation.
 - **Backfilling a `v0.9.0/` content tree.** v0.9.2 is the first versioned snapshot; we don't author historical docs retroactively. Users on v0.9.0 keep using crates.io README + docs.rs.
+
+---
+
+## Appendix A — Retired comprehensive review, inlined (intent only — do NOT copy code)
+
+*Source: `plans/comprehensive-code-review.md` §16, retired with `plans/` in the v1 docs cleanup. The full recommendation map lives in M092_001 Appendix A §A.5; this appendix carries the two items this spec implements.*
+
+### A.1 Recommendation #2 — Add Observability Hooks (High Priority)
+
+- Structured logging with `tracing`
+- Metrics integration (Prometheus, StatsD)
+- Distributed tracing support (OpenTelemetry)
+
+Scope boundary carried from the review discussion: this spec ships `tracing` (which OTel adapters consume) but does **not** own the OpenTelemetry adapter wiring — that is a separate spec.
+
+### A.2 Recommendation #8 — Add Cache Statistics (Low Priority)
+
+- Hit/miss rates
+- Average latency
+- Cache size metrics
+
+### A.3 Review context worth keeping
+
+The review's premise for both items: the `CacheMetrics` trait (`src/observability.rs:85`) existed as a hook with no batteries — no `tracing`, no `metrics`-crate adapter, no built-in stats collector, and metrics keyed by raw cache key (high-cardinality, breaks Prometheus). That diagnosis is what this spec's design answers.

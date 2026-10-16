@@ -20,9 +20,9 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 **Batch:** B1
 **Branch:** {feat/m092-error-codes — added when work begins}
 **Depends on:** none
-**Provenance:** agent-generated (pre-spec, derived from `plans/error-codes-improvement.md`)
+**Provenance:** agent-generated (pre-spec, derived from a design proposal since inlined as Appendix A and retired with `plans/`)
 
-> The source proposal in `plans/error-codes-improvement.md` is an 850-line design document containing inlined Rust pseudocode (pinned enum values, full match arms, sample test bodies). This spec is the goal-contract conversion — the implementing agent reads the proposal for intent but writes the implementation from project conventions in `src/error.rs`, not from the proposal's code blocks.
+> The source proposal (an 850-line design document) is inlined as Appendix A; the original was retired with `plans/`. This spec is the goal-statement conversion — the implementing agent reads Appendix A for intent but writes the implementation from project conventions in `src/error.rs`, never from the proposal's code blocks.
 
 **Canonical architecture:** N/A — no `docs/ARCHITECTURE.md` in this repo. Implementation surface is `src/error.rs` and its callers across `src/`.
 
@@ -33,7 +33,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 1. `src/error.rs` (224 lines) — current `Error` enum, `From` impls, `Display` impl. This is the pattern to mirror for error variants. Note the existing per-variant doc comments documenting "Common causes" and "Recovery"; preserve that voice.
 2. `src/expander.rs` — primary consumer of `Error`. Look at every `Err(Error::...)` construction site to understand which call sites need updating to carry codes + context.
 3. `src/backend/redis.rs` and `src/backend/memcached.rs` — error-mapping from the backend libraries into `cache_kit::Error`. The new error code surface must distinguish backend-source errors from validation/serialization errors at the call site.
-4. `plans/error-codes-improvement.md` (intent only — do NOT copy code) — read **Problem Statement**, **Benefits**, and **Migration Strategy** sections. Ignore everything inside ``` ``` ``` ``` fences; the agent writes Rust per project conventions, not per the proposal's example.
+4. **Appendix A** of this spec (intent only — do NOT copy code) — the retired proposal's **Problem Statement**, **Benefits**, and **Migration Strategy** sections, preserved inline. The agent writes Rust per project conventions, not per the proposal's examples.
 5. `examples/actixsqlx/src/services/user_service.rs` — a real consumer showing how errors propagate to an HTTP response. The new error surface must make this consumer's code simpler, not more verbose.
 
 ---
@@ -339,4 +339,56 @@ N/A — no files deleted. This is additive surface only.
 - **Internationalization / translation tables for error descriptions.** Out of scope; the proposal's "i18n" benefit is delivered indirectly by stable codes (downstream can build their own translation map).
 - **Auto-generation of the error catalog page from the `ErrorCode` enum.** Hand-authored for v0.9.2; codegen is a v1.0 concern.
 - **Removing the existing `Error::Other(String)` catch-all.** Deferred to v1.0; for now it gets code `ErrorCode::Unknown`.
-- **Other recommendations from `plans/comprehensive-code-review.md`** (circuit breaker, observability hooks, cache warming, etc.) — each one gets its own spec when picked up.
+- **Other recommendations from the retired comprehensive review** (full map in Appendix A §A.5: circuit breaker, cache warming, extra backends, compression, tagging, multi-level — observability hooks and cache statistics are M092_002) — each one gets its own spec when picked up.
+
+---
+
+## Appendix A — Retired design proposal, inlined (intent only — do NOT copy code)
+
+*Source: the `plans/error-codes-improvement.md` proposal, retired with `plans/` in the v1 docs cleanup. Code blocks from that proposal are deliberately not preserved here — the implementing agent writes Rust from project conventions in `src/error.rs`, per this spec's rules.*
+
+### A.1 Problem statement
+
+The `Error` variants carry only string messages, which blocks API consumers from:
+
+1. **Programmatically handling** specific error conditions
+2. **Internationalizing** error messages
+3. **Tracking and monitoring** specific error types in production
+4. **Documenting** error conditions in API specifications
+
+Issues named with the string-only shape: no machine-readable error codes; hard to distinguish between different validation errors; difficult to create error catalogs for documentation; no structured context (which key failed, which operation).
+
+### A.2 Migration strategy (from the proposal; "stages" are the proposal's phases renamed)
+
+1. **Stage 1 — add new types, non-breaking:** add `ErrorCode` enum, `ErrorContext` struct, `ErrorResponse` struct; the existing `Error` enum stays unchanged.
+2. **Stage 2 — deprecate old constructors:** `#[deprecated]` on old error constructors, new constructors carrying codes, internal code and examples moved over.
+3. **Stage 3 — breaking change at v1.0:** `Error` enum gains codes and context, deprecated constructors are removed, all creation sites and documentation updated.
+
+### A.3 Benefits claimed by the proposal
+
+1. **Programmatic error handling** — clients handle specific codes; no string parsing.
+2. **Better monitoring** — error rates by code, alerts on specific conditions, production patterns.
+3. **Improved documentation** — an error catalog of all codes; API documentation includes codes.
+4. **Internationalization** — codes are language-independent; messages can be translated by code.
+5. **Debugging** — structured context (cache key, entity type, operation) makes issues reproducible.
+
+### A.4 Scope notes carried forward
+
+- The `Error::Other(String)` catch-all stays until v1.0 (mapped to `ErrorCode::Unknown` meanwhile).
+- The error catalog page is hand-authored for this milestone; codegen from the enum is a v1.0 concern.
+
+### A.5 The retired comprehensive review's full recommendation map
+
+*From `plans/comprehensive-code-review.md` §16, retired with `plans/`. Dispositions as of v1:*
+
+| # | Recommendation | Disposition |
+|---|---|---|
+| 1 | Circuit breaker in `CacheExpander` | own spec (M093 candidate); needs this spec + M092_002 first |
+| 2 | Observability hooks (`tracing`, Prometheus/StatsD metrics, OpenTelemetry) | **M092_002** |
+| 3 | Cache warming strategies (`warm_up(keys, repository)`) | own spec when picked up |
+| 4 | Error context / codes (thiserror/anyhow noted as options) | **this spec** |
+| 5 | More backends (RocksDB, DynamoDB, Cloudflare KV) | own spec per backend |
+| 6 | Optional payload compression (LZ4, Zstd), transparent to users | own spec; v1 codec work benches it first |
+| 7 | Cache tagging (group-based invalidation) | own spec when picked up |
+| 8 | Cache statistics (hit/miss rates, average latency, size) | **M092_002** |
+| 9 | Multi-level caching (L1 in-memory + L2 Redis, promotion/demotion) | own spec; the v1 engine's typed local tier is the L1 substrate |
