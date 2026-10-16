@@ -3,6 +3,8 @@ name: CI - Main Library
 on:
   pull_request:
     branches: [main, develop]
+  push:
+    branches: [main]
 
 env:
   RUST_BACKTRACE: 1

@@ -3,6 +3,8 @@ name: CI - Examples
 on:
   pull_request:
     branches: [main, develop]
+  push:
+    branches: [main]
 
 env:
   RUST_BACKTRACE: 1
