@@ -19,9 +19,10 @@ Repo-specific additions:
   (`cargo test -- --test-threads=1`).
 - `make perf` / `perf-save` / `perf-diff` — criterion benches + Hypertext Markup
   Language (HTML) report and baseline comparison.
-- `make version-bump VERSION=x.y.z` then `make release` — bump the version
-  everywhere, then build/test/audit/publish to crates.io. Never hand-edit the
-  version in one place.
+- `make version-bump VERSION=x.y.z`, update `CHANGELOG.md`, commit, and merge
+  to main — the release workflow tags and publishes to crates.io (idempotent:
+  an already-published version is a no-op). Never hand-edit the version in one
+  place. `make release` stays as the local publish fallback.
 
 ## Terminology
 

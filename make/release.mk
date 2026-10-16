@@ -18,6 +18,7 @@ version-bump:  ## Bump version everywhere (usage: make version-bump VERSION=0.10
 	find docs -name "*.md" -type f -exec sed -i.bak "s/\"$$OLD_SEMVER\"/\"$$NEW_SEMVER\"/g" {} \; -exec rm {}.bak \;; \
 	sed -i.bak "s/$$OLD_VERSION/$(VERSION)/g" README.md && rm README.md.bak; \
 	sed -i.bak "s/\"$$OLD_SEMVER\"/\"$$NEW_SEMVER\"/g" README.md && rm README.md.bak; \
+	cargo metadata --no-deps --format-version 1 > /dev/null; \
 	echo "✓ Bumped $$OLD_VERSION → $(VERSION) (semver: $$OLD_SEMVER → $$NEW_SEMVER)"; \
-	echo "  Updated: VERSION, Cargo.toml, README.md, docs/**/*.md"; \
-	echo "  Next: Update CHANGELOG.md, commit, tag v$(VERSION)"
+	echo "  Updated: VERSION, Cargo.toml, Cargo.lock, README.md, docs/**/*.md"; \
+	echo "  Next: update CHANGELOG.md, commit, and merge to main — the release workflow tags v$(VERSION) and publishes to crates.io"

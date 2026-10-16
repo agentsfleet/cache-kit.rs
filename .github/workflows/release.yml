@@ -1,44 +1,80 @@
-name: Release
+name: release
 
+# A merge to main releases — no tag to remember, no second motion after the
+# Pull Request. Mirrored from agentsfleet/orly's release flow: this package is
+# one crates.io artifact whose only gate is the same test suite the Pull
+# Request already passed.
+#
+# Every merge runs this, and most merges do not change the version. crates.io
+# versions are immutable, so publishing must be idempotent: the run asks the
+# registry whether this exact version exists and stops if it does. That is
+# more reliable than diffing Cargo.toml against the previous commit, which a
+# squash merge or a revert can defeat.
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # create the tag and the GitHub release
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Read the version this commit carries
+        id: version
+        run: echo "value=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
 
-  create-release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Extract changelog
-        id: changelog
+      - name: Is it already published?
+        id: published
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          # Extract section for this version from CHANGELOG.md
-          sed -n "/^## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$d' > release_notes.txt
+          if curl -sf "https://crates.io/api/v1/crates/cache-kit/${{ steps.version.outputs.value }}" > /dev/null; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "cache-kit ${{ steps.version.outputs.value }} is already on the registry — nothing to release"
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+            echo "cache-kit ${{ steps.version.outputs.value }} is new — releasing"
+          fi
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          body_path: release_notes.txt
+      # The same gate the Pull Request passed, re-run against the merge commit:
+      # a merge can combine two independently-green branches into a red main,
+      # and this is the last point before an immutable artifact leaves. The
+      # full feature matrix lives in ci.yml; this is the default-features
+      # smoke, which needs no Redis or Memcached service.
+      - name: cargo test (default features)
+        if: steps.published.outputs.already == 'false'
+        run: cargo test --locked
+
+      # Modern cargo reads CARGO_REGISTRY_TOKEN from the environment; the
+      # deprecated `cargo publish --token` flag is gone.
+      - name: Publish to crates.io
+        if: steps.published.outputs.already == 'false'
+        run: cargo publish --locked
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      # The tag is created here, by the workflow, at the commit that just
+      # published — tagging by hand ahead of the publish is the failure mode
+      # this job exists to remove.
+      - name: Tag and create the GitHub release
+        if: steps.published.outputs.already == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          sed -n "/^## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$d' > release_notes.txt
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file release_notes.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
