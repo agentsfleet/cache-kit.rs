@@ -139,7 +139,7 @@ The blog article ships these numbers, so the methodology ships with them:
 
 ## 7. Rules of engagement
 
-- Read this repository's rules before writing: `.orly/AGENTS.md` (dispatch router), `RUST_GUIDELINES.txt`, and the spec template referenced by `.orly/docs/TEMPLATE.md`.
+- Read this repository's rules before writing: `.orly/AGENTS.md` (dispatch router), `.orly/dispatch/write_rust.md` (Rust authoring discipline), and the spec template referenced by `.orly/docs/TEMPLATE.md`.
 - The spec is filed by `orly-spec-new`, into `docs/v1/pending/`, only after Indy approves the approach. This prompt file is the input, not the spec.
 - Re-verify every `file:line` citation in §2 and §3 against current HEAD before relying on it; the repos move.
 - No edits outside the approved scope once the spec lands; no opportunistic refactors bundled in.

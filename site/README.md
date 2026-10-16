@@ -62,8 +62,6 @@ site/
 │   └── content.ts             ← frontmatter parser, markdown→HTML, sidebar
 ├── public/
 │   └── favicon.ico
-├── scripts/
-│   └── port-jekyll.mjs        ← one-time Jekyll → MDX migration (kept for history; can delete)
 ├── netlify.toml               ← build config, cache headers, Next.js plugin pin
 ├── next.config.mjs
 ├── package.json
@@ -211,4 +209,4 @@ the top.
 ## History
 
 - May 12, 2026 — Migrated from Jekyll (Minimal Mistakes, GitHub Pages) to Next.js 16
-  + Netlify. Content ported via `scripts/port-jekyll.mjs`.
+  + Netlify. Content ported from the Jekyll tree with a one-time porter (since retired).

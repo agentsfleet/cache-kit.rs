@@ -52,7 +52,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 
 ## Applicable Rules
 
-- **Project rule source:** `RUST_GUIDELINES.txt` at repo root — read sections covering trait additivity, feature-flag hygiene, zero-cost abstractions.
+- **Project rule source:** `.orly/dispatch/write_rust.md` (the orly Rust façade) — read sections covering trait additivity, feature-flag hygiene, zero-cost abstractions.
 - **`docs/greptile-learnings/RULES.md`** — universal repo discipline; applies to the diff.
 - **Semver discipline** — this is a v0.9.x change; the public `CacheMetrics` trait is part of the consumed Application Programming Interface (API). Changes must be additive (new methods with default impls, new types, new builder methods) for v0.9.2. Removing or re-typing existing methods is a v1.0 concern and out of scope here.
 - **Cardinality discipline** — Prometheus / metrics-crate label cardinality blowup is a production incident waiting to happen. Cache key MUST NOT be used as a metric label; entity type MUST be the only high-cardinality axis, and entity types are bounded (one per `Entity` impl in the consumer codebase).
@@ -497,7 +497,7 @@ N/A — no files deleted. `src/observability.rs` becomes a re-export shim; exist
 | When | Skill | Notes |
 |------|-------|------|
 | After implementation, before CHORE(close) | `/write-unit-test` | Audit diff coverage vs Test Specification. Particular focus: every Failure Modes row has a corresponding negative test. |
-| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `RUST_GUIDELINES.txt`, `docs/greptile-learnings/RULES.md`. Focus: trait additivity, feature-flag hygiene, zero-allocation in `StatsCollector`, no PII leakage by default, redirect correctness, audit script coverage. |
+| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `.orly/dispatch/write_rust.md`, and `.orly/docs/greptile-learnings/RULES.md`. Focus: trait additivity, feature-flag hygiene, zero-allocation in `StatsCollector`, no PII leakage by default, redirect correctness, audit script coverage. |
 | After `gh pr create` opens the PR | `/review-pr` | Re-review the now-immutable diff. Focus: clippy strictness, doc-comment completeness on every new pub item, span/event-name stability, version-selector UX. |
 
 ---

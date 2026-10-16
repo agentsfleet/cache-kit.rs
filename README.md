@@ -1,6 +1,6 @@
 # cache-kit
 
-**A type-safe, generic caching framework for Rust.**
+**Typed, read-through caching for Rust — one code path over in-memory, Redis, and Memcached.**
 
 [![Crates.io](https://img.shields.io/crates/v/cache-kit?style=flat-square)](https://crates.io/crates/cache-kit)
 [![Docs.rs](https://img.shields.io/docsrs/cache-kit?style=flat-square)](https://docs.rs/cache-kit)
@@ -10,31 +10,28 @@
 [![CI](https://github.com/megamsys/cache-kit.rs/actions/workflows/ci.yml/badge.svg)](https://github.com/megamsys/cache-kit.rs/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/megamsys/cache-kit.rs/branch/main/graph/badge.svg)](https://codecov.io/gh/megamsys/cache-kit.rs)
 
-A trait-based caching framework that works with any Rust type, any backend (InMemory, Redis, Memcached), and any database (SQLx, Diesel, tokio-postgres).
+Cache any `serde` type behind a small trait set and a strategy enum, so the
+read path reads the same whether the store is process memory or a shared
+backend. Database-agnostic: anything implementing `DataRepository` plugs in.
 
 ---
 
 ## Features
 
-- **Generic** — Cache any type `T` that implements `CacheEntity`
-- **Backend Agnostic** — Switch between InMemory, Redis, Memcached without code changes
-- **Database Agnostic** — Works with any repository implementing `DataRepository`
-- **Type Safe** — Compile-time verified
-- **Thread Safe** — `Send + Sync` guarantees
+- **Read-through by strategy** — `Fresh`, `Refresh` (default), `Invalidate`, `Bypass`: cache behavior is an explicit enum, not boolean flags.
+- **Backend-agnostic** — InMemory (default), Redis, Memcached. Switch by Cargo feature, never by code change.
+- **Typed, versioned payloads** — postcard codec under a magic + schema-version envelope; a version bump evicts stale entries instead of misreading them.
+- **Compile-time keys** — entity key and prefix come from the `CacheEntity` trait, verified by the compiler.
+- **Thread-safe** — `Send + Sync` throughout; async-only on `tokio`.
+- **Observable** — metrics hook plus per-prefix time-to-live (TTL) policies.
 
----
+## Requirements
 
-## ⚠️ Requirements
-
-- Requires `tokio` runtime (async-only)
-- Use Redis/Memcached for production (InMemory is single-instance only)
-- Decimal types (`rust_decimal::Decimal`) require custom serialization
-
-For production guidance, see the [documentation](http://cachekit.org/).
+- Rust 1.75+ (edition 2021) and a `tokio` runtime — every cache path is async.
+- Redis or Memcached for anything shared: `InMemory` is single-instance only.
+- `rust_decimal::Decimal` fields need custom serialization (see the [docs](http://cachekit.org/)).
 
 ## Quick Start
-
-### Add to Cargo.toml
 
 ```toml
 [dependencies]
@@ -43,7 +40,7 @@ serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
-### Basic Usage
+The full read-through pattern — entity, feeder, repository, strategy — in one file:
 
 ```rust
 use cache_kit::{
@@ -53,21 +50,20 @@ use cache_kit::{
 };
 use serde::{Deserialize, Serialize};
 
-// 1. Define your entity
+// The cached type. Key and prefix are compile-time.
 #[derive(Clone, Serialize, Deserialize)]
 struct User {
     id: String,
     name: String,
 }
 
-// 2. Implement CacheEntity
 impl CacheEntity for User {
     type Key = String;
     fn cache_key(&self) -> Self::Key { self.id.clone() }
     fn cache_prefix() -> &'static str { "user" }
 }
 
-// 3. Create a feeder
+// The receiver the cache operation feeds its outcome into.
 struct UserFeeder {
     id: String,
     user: Option<User>,
@@ -78,7 +74,7 @@ impl CacheFeed<User> for UserFeeder {
     fn feed(&mut self, entity: Option<User>) { self.user = entity; }
 }
 
-// 4. Create a repository
+// The source of truth the cache sits in front of.
 struct UserRepository;
 
 impl DataRepository<User> for UserRepository {
@@ -88,53 +84,44 @@ impl DataRepository<User> for UserRepository {
     }
 }
 
-// 5. Use the cache
 #[tokio::main]
 async fn main() -> cache_kit::Result<()> {
-    let backend = InMemoryBackend::new();
-    let expander = CacheExpander::new(backend);
-
+    let expander = CacheExpander::new(InMemoryBackend::new());
     let mut feeder = UserFeeder { id: "user_001".to_string(), user: None };
-    let repository = UserRepository;
 
-    expander.with(&mut feeder, &repository, CacheStrategy::Refresh).await?;
+    // Cache hit: returns cached. Miss: fetches, caches, returns.
+    expander.with(&mut feeder, &UserRepository, CacheStrategy::Refresh).await?;
 
     if let Some(user) = feeder.user {
         println!("User: {}", user.name);
     }
-
     Ok(())
 }
 ```
 
 ## Cache Strategies
 
-| Strategy              | Behavior                   | Use Case                     |
+| Strategy              | Behavior                   | Use case                     |
 | --------------------- | -------------------------- | ---------------------------- |
-| **Refresh** (default) | Try cache, fallback to DB  | Most common case             |
-| **Fresh**             | Cache only, no DB fallback | When data must be cached     |
+| **Refresh** (default) | Try cache, fallback to DB  | Most reads                   |
+| **Fresh**             | Cache only, no DB fallback | Data must be cached          |
 | **Invalidate**        | Clear cache, fetch from DB | After mutations              |
-| **Bypass**            | Skip cache, always use DB  | Testing or temporary disable |
-
-## Advanced Usage
-
-For complex operations like custom TTL overrides, retry logic, and builder patterns, see the [documentation](http://cachekit.org/) for advanced features including metrics, TTL policies, and `CacheService` for service-oriented architectures.
+| **Bypass**            | Skip cache, always use DB  | Testing, temporary disable   |
 
 ## Backends
 
-### In-Memory (Default)
+Selected by Cargo feature: `inmemory` (default), `redis`, `memcached`, or `all`.
 
 ```rust
 use cache_kit::backend::InMemoryBackend;
-let backend = InMemoryBackend::new();
-let expander = CacheExpander::new(backend);
+let expander = CacheExpander::new(InMemoryBackend::new());
 ```
 
-### Redis
-
 ```toml
-[dependencies]
+# Redis
 cache-kit = { version = "0.9", features = ["redis"] }
+# Memcached
+cache-kit = { version = "0.9", features = ["memcached"] }
 ```
 
 ```rust
@@ -143,83 +130,56 @@ let backend = RedisBackend::new(RedisConfig::default())?;
 let expander = CacheExpander::new(backend);
 ```
 
-### Memcached
-
-```toml
-[dependencies]
-cache-kit = { version = "0.9", features = ["memcached"] }
-```
-
-```rust
-use cache_kit::backend::{MemcachedBackend, MemcachedConfig};
-let backend = MemcachedBackend::new(MemcachedConfig::default())?;
-let expander = CacheExpander::new(backend);
-```
-
 ## Observability
 
-The framework supports logging (via `log` crate) and custom metrics:
+Logging via the `log` crate, a `CacheMetrics` hook, and TTL policies:
 
 ```rust
-use cache_kit::observability::{CacheMetrics, TtlPolicy};
+use cache_kit::observability::TtlPolicy;
 use std::time::Duration;
 
-// Custom metrics
-let expander = CacheExpander::new(backend)
-    .with_metrics(Box::new(MyMetrics));
-
-// TTL policies
 let expander = CacheExpander::new(backend)
     .with_ttl_policy(TtlPolicy::Fixed(Duration::from_secs(300)));
 ```
 
-See the [documentation](http://cachekit.org/) for details on metrics and TTL policies.
-
 ## Examples
 
 ```bash
-# Basic usage
 cargo run --example basic_usage
-
-# Multiple backends
 cargo run --example multiple_backends --features redis,memcached
-
-# Advanced builder
 cargo run --example advanced_builder
 ```
+
+Full integration apps live under `examples/` (Actix + SQLx, Axum + gRPC).
 
 ## Testing
 
 ```bash
-make up
+make up                                # local Redis + Memcached
 make test FEATURES="--all-features"
 ```
-
-For more examples and guides, see the [documentation](http://cachekit.org/).
 
 ## Publishing
 
 ```bash
-make up
-make release
+make version-bump VERSION=x.y.z && make release
 ```
 
-This runs build, test, audit, and publish. For linting, use `make dev`.
+Builds, tests, audits, and publishes to crates.io. For the daily loop: `make dev`.
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Repository rules
+live in `AGENTS.md` + `.orly/`.
 
 ## License
 
-MIT License - Copyright (c) 2025 Kishore kumar Neelamegam
+MIT — Copyright (c) 2025 Kishore kumar Neelamegam. See [LICENSE](LICENSE).
 
-See [LICENSE](LICENSE) file for details.
+## Links
 
-## Support
-
-**Maintainer:** Kishore kumar Neelamegam
-**Repository:** [github.com/megamsys/cache-kit.rs](https://github.com/megamsys/cache-kit.rs)
-**Issues:** [GitHub Issues](https://github.com/megamsys/cache-kit.rs/issues)
-**Crates.io:** [crates.io/crates/cache-kit](https://crates.io/crates/cache-kit)
-**Documentation:** [cachekit.org](https://cachekit.org)
+[Repository](https://github.com/megamsys/cache-kit.rs) ·
+[Issues](https://github.com/megamsys/cache-kit.rs/issues) ·
+[crates.io](https://crates.io/crates/cache-kit) ·
+[docs.rs](https://docs.rs/cache-kit) ·
+[Guide (cachekit.org)](https://cachekit.org)

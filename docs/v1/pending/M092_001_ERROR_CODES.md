@@ -50,7 +50,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 
 ## Applicable Rules
 
-- **Project rule source:** `RUST_GUIDELINES.txt` at repo root (90KB) — read sections covering error handling, public API stability, and trait bounds.
+- **Project rule source:** `.orly/dispatch/write_rust.md` (the orly Rust façade) — read sections covering error handling, public API stability, and trait bounds.
 - **`.orly/docs/greptile-learnings/RULES.md`** — universal repo discipline; applies to the diff.
 - **Semver discipline** — this is a v0.9.x change; the public `Error` enum is part of the consumed API. Changes must be additive (new variants, new methods) for v0.9.2. Removing or renaming existing variants is a v1.0 concern and out of scope here.
 - **Postcard envelope versioning** — if any error variant is serialized into a cache envelope (it shouldn't be — errors aren't cached), the envelope version rules in `src/serialization/` apply.
@@ -311,7 +311,7 @@ N/A — no files deleted. This is additive surface only.
 | When | Skill | Notes |
 |------|-------|------|
 | After implementation, before CHORE(close) | `/write-unit-test` | Audit diff coverage vs Test Specification. Particular focus: every Failure Modes row has a corresponding negative test. |
-| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `RUST_GUIDELINES.txt`, and `.orly/docs/greptile-learnings/RULES.md`. Focus areas: backwards-compatibility (existing match patterns must keep compiling), no inadvertent `unsafe`, no `panic!` paths. |
+| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `.orly/dispatch/write_rust.md`, and `.orly/docs/greptile-learnings/RULES.md`. Focus areas: backwards-compatibility (existing match patterns must keep compiling), no inadvertent `unsafe`, no `panic!` paths. |
 | After `gh pr create` opens the PR | `/review-pr` | Re-review the now-immutable diff. Focus areas: clippy strictness, doc-comment completeness on the new public surface. |
 
 ---

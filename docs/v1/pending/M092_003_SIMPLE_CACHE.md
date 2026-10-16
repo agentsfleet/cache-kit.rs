@@ -53,7 +53,7 @@ SPEC AUTHORING RULES (load-bearing — do not delete):
 ## Applicable Rules
 
 - **`.orly/docs/greptile-learnings/RULES.md`** — universal repo discipline.
-- **Project rule source:** `RUST_GUIDELINES.txt` at repo root — read sections covering trait additivity, generic bounds, and zero-cost abstractions.
+- **Project rule source:** `.orly/dispatch/write_rust.md` (the orly Rust façade) — read sections covering trait additivity, generic bounds, and zero-cost abstractions.
 - **Semver discipline** — purely additive. `SimpleCache` is a new public type; no existing names move or change shape.
 - **Simplicity-first invariant (set by this spec)** — every public method on `SimpleCache` must work without the user implementing any cache-kit trait. If a method requires the user to implement `CacheEntity` / `CacheFeed` / `DataRepository`, it doesn't belong on `SimpleCache` — it belongs on `CacheExpander`. This invariant is testable: a doc-test with a `User` struct that derives only `Serialize + Deserialize + Clone` must compile against every `SimpleCache` method.
 - **README budget rule** — the post-spec `README.md` Quick Start section (between `## Quick Start` and the next `##`) is bounded at 50 source lines. Today it sits at ~60. Any growth of the simple surface that pushes the README past 50 needs the surface trimmed, not the budget raised. Enforced by `scripts/check-readme-quickstart-budget.sh` invoked from CI.
@@ -444,7 +444,7 @@ The old README Quick Start example (the 50-line `CacheExpander` walk-through) MO
 | When | Skill | Notes |
 |------|-------|------|
 | After implementation, before CHORE(close) | `/write-unit-test` | Audit diff coverage vs Test Specification. Particular focus: the simplicity-invariant doc-test (zero required traits), the README-budget regression test, the loader-error propagation in `try_get_or_insert_with`. |
-| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `RUST_GUIDELINES.txt`, and `.orly/docs/greptile-learnings/RULES.md`. Focus areas: `CacheExpander` surface unchanged (any drift is a violation), no duplicated backend/serialization logic in `simple.rs`, doc-comments on every public method include a working snippet, the "thundering herd" gap is explicitly documented in `get_or_insert_with`'s doc-comment. |
+| After tests pass, still before CHORE(close) | `/review` | Adversarial diff review against this spec, `.orly/dispatch/write_rust.md`, and `.orly/docs/greptile-learnings/RULES.md`. Focus areas: `CacheExpander` surface unchanged (any drift is a violation), no duplicated backend/serialization logic in `simple.rs`, doc-comments on every public method include a working snippet, the "thundering herd" gap is explicitly documented in `get_or_insert_with`'s doc-comment. |
 | After `gh pr create` opens the PR | `/review-pr` | Re-review the now-immutable diff. Focus areas: README Quick Start actually reads cleanly (run it through fresh eyes — does it answer "what does this library do?" in 30 seconds?), `simple-vs-expander.mdx` is honest about when to pick which, the CI budget script blocks future bloat. |
 
 ---
