@@ -1,0 +1,6 @@
+# Monorepo entry point: the docs site lives in site/. Netlify reads this file
+# before the project's UI build settings, so a re-linked or freshly linked
+# project still builds the right directory; site/netlify.toml carries the
+# actual build command, publish directory, and Next.js plugin pin.
+[build]
+  base = "site/"
