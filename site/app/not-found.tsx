@@ -7,7 +7,7 @@ export default function NotFound() {
       <p>
         That page doesn&rsquo;t exist. Try the <Link href="/">documentation index</Link> or open an
         issue on{" "}
-        <a href="https://github.com/megamsys/cache-kit.rs/issues">GitHub</a>.
+        <a href="https://github.com/agentsfleet/cache-kit.rs/issues">GitHub</a>.
       </p>
     </article>
   );

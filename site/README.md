@@ -1,6 +1,6 @@
 # cache-kit docs site
 
-Next.js 16 + Netlify documentation site for [cache-kit](https://github.com/megamsys/cache-kit.rs),
+Next.js 16 + Netlify documentation site for [cache-kit](https://github.com/agentsfleet/cache-kit.rs),
 served at [cachekit.org](https://cachekit.org).
 
 Replaced the prior Jekyll (Minimal Mistakes) build under `docs/`. Mirrors the stack and

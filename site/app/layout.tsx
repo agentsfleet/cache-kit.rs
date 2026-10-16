@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             cache-kit
           </Link>
           <nav className="docs-nav" aria-label="External links">
-            <a href="https://github.com/megamsys/cache-kit.rs">GitHub</a>
+            <a href="https://github.com/agentsfleet/cache-kit.rs">GitHub</a>
             <a href="https://crates.io/crates/cache-kit">crates.io</a>
           </nav>
         </header>
@@ -64,15 +64,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p className="meta">
               Built by{" "}
               <a href="https://github.com/indykish">Kishore Kumar Neelamegam</a> at{" "}
-              <a href="https://github.com/megamsys">Megam Systems</a>.
+              <a href="https://github.com/agentsfleet">agentsfleet</a>.
             </p>
             <p className="meta">
-              <a href="https://github.com/megamsys/cache-kit.rs/issues">Issues</a> &middot;{" "}
-              <a href="https://github.com/megamsys/cache-kit.rs/blob/main/CHANGELOG.md">
+              <a href="https://github.com/agentsfleet/cache-kit.rs/issues">Issues</a> &middot;{" "}
+              <a href="https://github.com/agentsfleet/cache-kit.rs/blob/main/CHANGELOG.md">
                 Changelog
               </a>{" "}
               &middot;{" "}
-              <a href="https://github.com/megamsys/cache-kit.rs/blob/main/LICENSE">License</a>
+              <a href="https://github.com/agentsfleet/cache-kit.rs/blob/main/LICENSE">License</a>
             </p>
           </div>
         </footer>

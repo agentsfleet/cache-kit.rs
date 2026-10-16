@@ -32,4 +32,4 @@ make build
 
 ## Questions or Issues?
 
-Open a GitHub issue: [github.com/megamsys/cache-kit.rs/issues](https://github.com/megamsys/cache-kit.rs/issues)
+Open a GitHub issue: [github.com/agentsfleet/cache-kit.rs/issues](https://github.com/agentsfleet/cache-kit.rs/issues)

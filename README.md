@@ -7,8 +7,8 @@
 [![Documentation](https://img.shields.io/badge/guide-cachekit.org-blue?style=flat-square)](http://cachekit.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.75%2B-blue?style=flat-square&logo=rust)](https://www.rust-lang.org)
-[![CI](https://github.com/megamsys/cache-kit.rs/actions/workflows/ci.yml/badge.svg)](https://github.com/megamsys/cache-kit.rs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/megamsys/cache-kit.rs/branch/main/graph/badge.svg)](https://codecov.io/gh/megamsys/cache-kit.rs)
+[![CI](https://github.com/agentsfleet/cache-kit.rs/actions/workflows/ci.yml/badge.svg)](https://github.com/agentsfleet/cache-kit.rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/agentsfleet/cache-kit.rs/branch/main/graph/badge.svg)](https://codecov.io/gh/agentsfleet/cache-kit.rs)
 
 Cache any `serde` type behind a small trait set and a strategy enum, so the
 read path reads the same whether the store is process memory or a shared
@@ -178,8 +178,8 @@ MIT — Copyright (c) 2025 Kishore kumar Neelamegam. See [LICENSE](LICENSE).
 
 ## Links
 
-[Repository](https://github.com/megamsys/cache-kit.rs) ·
-[Issues](https://github.com/megamsys/cache-kit.rs/issues) ·
+[Repository](https://github.com/agentsfleet/cache-kit.rs) ·
+[Issues](https://github.com/agentsfleet/cache-kit.rs/issues) ·
 [crates.io](https://crates.io/crates/cache-kit) ·
 [docs.rs](https://docs.rs/cache-kit) ·
 [Guide (cachekit.org)](https://cachekit.org)

@@ -22,7 +22,7 @@ export default function HomePage() {
           <Link className="cta-primary" href="/getting-started/installation">
             Get started
           </Link>
-          <a href="https://github.com/megamsys/cache-kit.rs">View on GitHub</a>
+          <a href="https://github.com/agentsfleet/cache-kit.rs">View on GitHub</a>
         </div>
       </section>
 
