@@ -42,7 +42,11 @@ jobs:
       - name: Is it already published?
         id: published
         run: |
-          if curl -sf "https://crates.io/api/v1/crates/cache-kit/${{ steps.version.outputs.value }}" > /dev/null; then
+          # crates.io's API refuses requests without a User-Agent — a bare
+          # curl -sf gets a 403, which this check must not misread as "not
+          # published" (it did once, and the run died trying to re-publish
+          # an existing version).
+          if curl -sf -H "User-Agent: agentsfleet-cache-kit-ci (https://github.com/agentsfleet/cache-kit.rs)" "https://crates.io/api/v1/crates/cache-kit/${{ steps.version.outputs.value }}" > /dev/null; then
             echo "already=true" >> "$GITHUB_OUTPUT"
             echo "cache-kit ${{ steps.version.outputs.value }} is already on the registry — nothing to release"
           else
