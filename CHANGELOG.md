@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - 2025-12-31
+## [0.9.1] - 2026-10-16
+
+The crate's home moved to
+[agentsfleet/cache-kit.rs](https://github.com/agentsfleet/cache-kit.rs). No
+functional changes — code, API, and behavior are identical to 0.9.0.
+
+### Changed
+
+- **Repository** — published from `agentsfleet/cache-kit.rs`; Cargo metadata, badges, and documentation links point at the new home. The old `megamsys/cache-kit.rs` repository is archived with a pointer.
+- **README** — rewritten front door: clearer pitch, requirements, and strategy table for the current API.
+
+### Fixed
+
+- **Docs-site example link** — a malformed `cache-kit/.rs` URL on the quick-start page now resolves.
 
 ### Added
 
